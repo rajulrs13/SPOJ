@@ -9,3 +9,9 @@
 
 # Ignore files with extension `.class`
 *.class
+
+# Test File
+test.cpp
+
+# Input Files
+*.txt
