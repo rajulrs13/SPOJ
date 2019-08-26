@@ -12,6 +12,7 @@
 
 # Test File
 test.cpp
+test1.cpp
 
 # Input Files
 *.txt
