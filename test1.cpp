@@ -1,104 +1,85 @@
 #include <bits/stdc++.h>
+
 using namespace std;
-/*Structure that is used to 
-store value*/
-struct node
-{
-   int sum,prefixsum;
-   int suffixsum,maxsum;
-};
-node tree[4*50010];
-int arr[50010];
-/*This function is used to build the 
-segment tree*/
-void build(int index,int start,int end)
-{
-   if(start == end)
-   {
-      tree[index].sum = arr[start];
-      tree[index].prefixsum = arr[start];
-      tree[index].suffixsum = arr[start];
-      tree[index].maxsum = arr[start];
-   }
-   else
-   {
-      int mid = (start+end)/2;
-      build(2*index+1,start,mid);
-      build(2*index+2,mid+1,end);
-      
-      /*Note how we use the array to access the left 
-      and right subtree*/
-      tree[index].sum = 
-         tree[2*index+1].sum + tree[2*index+2].sum;
-      tree[index].prefixsum = 
-         max(tree[2*index+1].prefixsum,
-            tree[2*index+1].sum + tree[2*index+2].prefixsum);
-      tree[index].suffixsum = 
-         max(tree[2*index+2].suffixsum,
-            tree[2*index+2].sum + tree[2*index+1].suffixsum);   
-      tree[index].maxsum = 
-         max(tree[index].prefixsum,
-            max(tree[index].suffixsum,
-               max(tree[2*index+1].maxsum,
-                  max(tree[2*index+2].maxsum,
-                     tree[2*index+1].suffixsum
-                        +tree[2*index+2].prefixsum
-                     )
-                  )
-               )
-            );
-   }
-}
-/*this function is used to return the result
-for each query*/
-node query(int index,int be,int en,int f,int l)
-{
-   node result;
-   result.sum=result.prefixsum=INT_MIN;
-   result.suffixsum=result.maxsum=INT_MIN;
-   
-   if(l<be || en<f)
-      return result;
-   if(f<=be && en<=l)   
-      return tree[index];
-   
-   int mid = (be+en)/2;
-   if (f > mid)
-         return query(2*index+2, mid+1, en, f, l);
-   if (l <= mid)
-         return query(2*index+1, be, mid, f, l);
-   
-   node left = query(2*index+1,be,mid,f,l);
-   node right = query(2*index+2,mid+1,en,f,l);
-   
-   result.sum = left.sum + right.sum;
-   result.prefixsum = 
-      max(left.prefixsum, left.sum + right.prefixsum);
-   result.suffixsum = 
-      max(right.suffixsum, right.sum + left.suffixsum);
-   result.maxsum = 
-      max(result.prefixsum, 
-         max(result.suffixsum, 
-            max(left.maxsum, 
-               max(right.maxsum,
-                  left.suffixsum + right.prefixsum))));
-   return result;            
+
+// Storage for intermediate results
+int dp[6110][6110];
+
+// Function to find minimum insertions
+// The approach we are going to use is dynamic programming
+// First we try to solve smaller sub problems such as of length 1,2...n;
+// Consider this example fft
+// For length 1
+// Every string of length 1 is a palindrome so we store 0 for each single
+// character For length 2 Now if first and last character are equal then simple
+// answer is 0 else for example in 'ab' we can make it palindrome as 'aba' or
+// 'bab' so we have two options in one we insert at last the first character and
+// increase index of first character and in second we insert at first the last
+// character and decrease index of last character we find the minimum of these
+// two steps as we have already found the result for this smaller subproblems
+// For length > 2 IT will be similar to last step except when equal result will
+// be equal to result of subproblem by removing these equal character for
+// example in abca result will be of bc
+int findMinInsertion(string &str) {
+    // For one length it will simply be 0
+    for (int i = 0; i < str.length(); i++) dp[i][i] = 0;
+
+    for (int i = 0; i < str.length() + 1; i++) {
+        for (int j = 0; j < str.length() + 1; j++) {
+            cout << dp[i][j] << "\t";
+        }
+        cout << endl;
+    }
+
+    // Find all length till the length of string
+    for (int i = 2; i <= str.length(); i++) {
+        // Now traverse all i length substring in string
+        for (int j = 0; j < str.length() - i + 1; j++) {
+            // Find end of current string
+            int e = j + i - 1;
+
+            // if char are equal and length is 2 we need 0 operations
+            if (str[e] == str[j] && i == 2) dp[j][e] = 0;
+            // else if length is greater than 2 operations are equal to inside
+            // subproblem
+            else if (str[e] == str[j])
+                dp[j][e] = dp[j + 1][e - 1];
+            else
+                // else if char are not equal either we can insert at last or
+                // start so it will minimum of these two operations
+                dp[j][e] = 1 + min(dp[j + 1][e], dp[j][e - 1]);
+
+            cout << "i: " << i << " j: " << j << " e: " << e << endl;
+            for (int i = 0; i < str.length() + 1; i++) {
+                for (int j = 0; j < str.length() + 1; j++) {
+                    cout << dp[i][j] << "\t";
+                }
+                cout << endl;
+            }
+        }
+    }
+
+    // return result
+    return dp[0][str.length() - 1];
 }
 int main() {
-   int n,m,a,b;
-   scanf("%d",&n);
-   
-   for(int i=0;i<n;++i)
-      scanf("%d",&arr[i]);
-   
-   build(0,0,n-1);
-   
-   scanf("%d",&m);
-   
-   for(int i=0;i<m;++i)
-   {
-      scanf("%d%d",&a,&b);
-      printf("%d\n",query(0,0,n-1,a-1,b-1).maxsum);
-   }   
-   return 0;
+    // Number of test cases
+    int t;
+    cin >> t;
+
+    // Loop over all test cases
+    string str;
+    while (t--) {
+        // Take input string
+        cin >> str;
+
+        // Make the storage first initialize to max
+        for (int i = 0; i < str.length() + 1; i++)
+            for (int j = 0; j < str.length() + 1; j++) dp[i][j] = -1;
+
+        // Find the result
+        cout << findMinInsertion(str) << endl;
+    }
+
+    return 0;
 }
